@@ -1,0 +1,49 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+input CreateProductInput {
+  description: String
+  name: String!
+  price: Float!
+}
+
+input CreateUserInput {
+  email: String!
+  name: String!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type Mutation {
+  createProduct(createProductInput: CreateProductInput!): Product!
+  createUser(createUserInput: CreateUserInput!): User!
+}
+
+type Product {
+  createdAt: DateTime!
+  description: String
+  id: ID!
+  isAvailable: Boolean!
+  name: String!
+  price: Float!
+}
+
+type Query {
+  product(id: String!): Product
+  products: [Product!]!
+  user(id: String!): User
+  userByEmail(email: String!): User
+  users: [User!]!
+}
+
+type User {
+  createdAt: DateTime!
+  email: String!
+  id: ID!
+  name: String!
+  orderIds: [String!]
+}
