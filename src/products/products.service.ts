@@ -1,45 +1,56 @@
 import { Injectable } from '@nestjs/common';
-import { Product } from './models/product.model';
-import { v4 as uuidv4 } from 'uuid';
+import { CreateProductInput } from './dto/create-product.input';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class ProductsService {
-  // In-memory database for this example
-  private products: Product[] = [];
+  constructor(private prisma: PrismaService) {}
 
-  constructor() {
-    // Add some sample products
-    this.createProduct({
-      name: 'Laptop',
-      description: 'High performance laptop',
-      price: 1299.99,
-    });
-    this.createProduct({
-      name: 'Smartphone',
-      description: 'Latest model with great camera',
-      price: 899.99,
+  async findAll() {
+    return this.prisma.product.findMany();
+  }
+
+  async findOne(id: string) {
+    return this.prisma.product.findUnique({
+      where: { id },
     });
   }
 
-  findAll(): Product[] {
-    return this.products;
+  async createProduct(input: CreateProductInput) {
+    return this.prisma.product.create({
+      data: {
+        name: input.name,
+        description: input.description,
+        price: input.price,
+        isAvailable: true,
+        createdAt: new Date(),
+      },
+    });
   }
 
-  findOne(id: string): Product | null {
-    return this.products.find(product => product.id === id) || null;
-  }
-
-  createProduct(input: { name: string; description?: string; price: number }): Product {
-    const product: Product = {
-      id: uuidv4(),
-      name: input.name,
-      description: input.description,
-      price: input.price,
-      isAvailable: true,
-      createdAt: new Date(),
-    };
-
-    this.products.push(product);
-    return product;
+  // If you need to seed some initial data, you could add a method like this:
+  async seedInitialProducts() {
+    // Only seed if no products exist
+    const count = await this.prisma.product.count();
+    if (count === 0) {
+      await this.prisma.product.createMany({
+        data: [
+          {
+            name: 'Laptop',
+            description: 'High performance laptop',
+            price: 1299.99,
+            isAvailable: true,
+            createdAt: new Date(),
+          },
+          {
+            name: 'Smartphone',
+            description: 'Latest model with great camera',
+            price: 899.99,
+            isAvailable: true,
+            createdAt: new Date(),
+          },
+        ],
+      });
+    }
   }
 }

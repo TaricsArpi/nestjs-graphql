@@ -1,42 +1,80 @@
 import { Injectable } from '@nestjs/common';
-import { Order } from './models/order.model';
-import { v4 as uuidv4 } from 'uuid';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class OrdersService {
-  private orders: Order[] = [];
+  constructor(private prisma: PrismaService) {}
 
-  constructor() {
-    // Add some sample orders
-    this.createOrder({
-      userId: 'user-id-placeholder', // We'll replace this when we implement federation
-      productIds: ['product-id-placeholder'],
-      totalAmount: 1299.99,
+  async findAll() {
+    return this.prisma.order.findMany({
+      include: {
+        products: true,
+        user: true
+      }
+    });
+  }
+  
+  async findOne(id: string) {
+    return this.prisma.order.findUnique({
+      where: { id },
+      include: {
+        products: true,
+        user: true
+      }
+    });
+  }
+  
+  async findByUser(userId: string) {
+    return this.prisma.order.findMany({
+      where: { user: { id: userId}  },
+      include: {
+        products: true,
+        user: true
+      }
     });
   }
 
-  findAll(): Order[] {
-    return this.orders;
+  async createOrder(input: { 
+    userId: string; 
+    productIds: string[]; 
+    totalAmount: number 
+  }) {
+    return this.prisma.order.create({
+      data: {
+        userId: input.userId,
+        totalAmount: input.totalAmount,
+        products: {
+          connect: input.productIds.map(id => ({ id }))
+        },
+        orderedAt: new Date()
+      },
+      include: {
+        products: true,
+        user: true
+      }
+    });
   }
 
-  findOne(id: string): Order | null {
-    return this.orders.find(order => order.id === id) || null;
-  }
+  // Optional: Method to seed initial data if needed
+  async seedInitialOrders() {
+    const count = await this.prisma.order.count();
+    if (count === 0) {
+      // You might want to ensure you have a user and products first
+      const user = await this.prisma.user.findFirst();
+      const products = await this.prisma.product.findMany({ take: 2 });
 
-  findByUser(userId: string): Order[] {
-    return this.orders.filter(order => order.userId === userId);
-  }
-
-  createOrder(input: { userId: string; productIds: string[]; totalAmount: number }): Order {
-    const order: Order = {
-      id: uuidv4(),
-      userId: input.userId,
-      productIds: input.productIds,
-      totalAmount: input.totalAmount,
-      orderedAt: new Date(),
-    };
-
-    this.orders.push(order);
-    return order;
+      if (user && products.length > 0) {
+        await this.prisma.order.create({
+          data: {
+            userId: user.id,
+            totalAmount: products.reduce((sum, product) => sum + product.price, 0),
+            products: {
+              connect: products.map(product => ({ id: product.id }))
+            },
+            orderedAt: new Date()
+          }
+        });
+      }
+    }
   }
 }

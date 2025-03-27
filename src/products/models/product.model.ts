@@ -1,4 +1,5 @@
 import { Field, ID, ObjectType, Float } from '@nestjs/graphql';
+import { Order } from 'src/orders/models/order.model';
 
 @ObjectType()
 export class Product {
@@ -9,7 +10,7 @@ export class Product {
   name: string;
 
   @Field(() => String, { nullable: true })
-  description?: string;
+  description: string | null;
 
   @Field(() => Float)
   price: number;
@@ -19,4 +20,7 @@ export class Product {
 
   @Field(() => Date)
   createdAt: Date;
+
+  @Field(() => [Order], { nullable: true })
+  orders?: Order[]
 }

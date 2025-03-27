@@ -1,49 +1,73 @@
-import { Injectable } from '@nestjs/common';
-import { User } from './models/user.model';
-import { v4 as uuidv4 } from 'uuid';
+import { Injectable, ConflictException } from '@nestjs/common';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class UsersService {
-  private users: User[] = [];
+  constructor(private prisma: PrismaService) {}
 
-  constructor() {
-    // Add some sample users
-    this.createUser({
-      name: 'John Doe',
-      email: 'john@example.com',
+  async findAll() {
+    return this.prisma.user.findMany();
+  }
+
+  async findOne(id: string) {
+    return this.prisma.user.findUnique({
+      where: { id },
+      include: {
+        orders: true, // Optional: include user's orders
+      },
     });
-    this.createUser({
-      name: 'Jane Smith',
-      email: 'jane@example.com',
+  }
+
+  async findByEmail(email: string) {
+    return this.prisma.user.findUnique({
+      where: { email },
+      include: {
+        orders: true, // Optional: include user's orders
+      },
     });
   }
 
-  findAll(): User[] {
-    return this.users;
-  }
-
-  findOne(id: string): User | null {
-    return this.users.find(user => user.id === id) || null;
-  }
-
-  findByEmail(email: string): User | null {
-    return this.users.find(user => user.email === email) || null;
-  }
-
-  createUser(input: { name: string; email: string }): User {
-    const existingUser = this.findByEmail(input.email);
-    if (existingUser) {
-      return existingUser;
+  async createUser(input: { name: string; email: string }) {
+    try {
+      return await this.prisma.user.create({
+        data: {
+          name: input.name,
+          email: input.email,
+        },
+        include: {
+          orders: true, // Optional: include user's orders
+        },
+      });
+    } catch (error) {
+      // Handle unique constraint violation (duplicate email)
+      if (error.code === 'P2002') {
+        // Prisma error code for unique constraint violation
+        const existingUser = await this.findByEmail(input.email);
+        if (existingUser) {
+          return existingUser;
+        }
+        throw new ConflictException('User creation failed');
+      }
+      throw error;
     }
+  }
 
-    const user: User = {
-      id: uuidv4(),
-      name: input.name,
-      email: input.email,
-      createdAt: new Date(),
-    };
-
-    this.users.push(user);
-    return user;
+  // Optional: Method to seed initial users
+  async seedInitialUsers() {
+    const count = await this.prisma.user.count();
+    if (count === 0) {
+      await this.prisma.user.createMany({
+        data: [
+          {
+            name: 'John Doe',
+            email: 'john@example.com',
+          },
+          {
+            name: 'Jane Smith',
+            email: 'jane@example.com',
+          },
+        ],
+      });
+    }
   }
 }

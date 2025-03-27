@@ -8,22 +8,22 @@ export class OrdersResolver {
   constructor(private ordersService: OrdersService) {}
 
   @Query(() => [Order])
-  orders(): Order[] {
+  async orders(): Promise<Order[]> {
     return this.ordersService.findAll();
   }
 
   @Query(() => Order, { nullable: true })
-  order(@Args('id') id: string): Order | null {
+  async order(@Args('id') id: string): Promise<Order | null> {
     return this.ordersService.findOne(id);
   }
 
   @Query(() => [Order])
-  ordersByUser(@Args('userId') userId: string): Order[] {
+  async ordersByUser(@Args('userId') userId: string): Promise<Order[]> {
     return this.ordersService.findByUser(userId);
   }
 
   @Mutation(() => Order)
-  createOrder(@Args('createOrderInput') createOrderInput: CreateOrderInput): Order {
+  async createOrder(@Args('createOrderInput') createOrderInput: CreateOrderInput): Promise<Order> {
     return this.ordersService.createOrder(createOrderInput);
   }
 }

@@ -8,17 +8,17 @@ export class ProductsResolver {
   constructor(private productsService: ProductsService) {}
 
   @Query(() => [Product])
-  products(): Product[] {
+  async products(): Promise<Product[]> {
     return this.productsService.findAll();
   }
 
   @Query(() => Product, { nullable: true })
-  product(@Args('id') id: string): Product | null {
+  async product(@Args('id') id: string): Promise<Product | null> {
     return this.productsService.findOne(id);
   }
 
   @Mutation(() => Product)
-  createProduct(@Args('createProductInput') createProductInput: CreateProductInput): Product {
+  async createProduct(@Args('createProductInput') createProductInput: CreateProductInput): Promise<Product> {
     return this.productsService.createProduct(createProductInput);
   }
 }
