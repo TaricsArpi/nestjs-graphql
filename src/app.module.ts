@@ -9,6 +9,7 @@ import { UsersModule } from './users/users.module';
 import { OrdersModule } from './orders/orders.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
+import { KafkaModule } from './kafka/kafka.module';
 
 @Module({
   imports: [
@@ -18,9 +19,11 @@ import { ConfigModule } from '@nestjs/config';
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
       sortSchema: true
     }),
+    PrismaModule,
     ProductsModule,
     UsersModule,
     OrdersModule,
+    KafkaModule,
   ],
   controllers: [AppController],
   providers: [AppService],
